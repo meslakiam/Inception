@@ -1,0 +1,49 @@
+#!/bin/sh
+set -e
+
+echo "Configuring MariaDB..."
+
+cat > /etc/mysql/mariadb.conf.d/my.cnf <<EOF
+[mysqld]
+bind-address=0.0.0.0
+port=${MARIADB_PORT}
+datadir=/var/lib/mysql
+EOF
+
+# Start MariaDB only for initialization
+mysqld --user=mysql --skip-networking &
+
+echo "Waiting for MariaDB..."
+
+until mariadb-admin ping --silent; do
+    sleep 1
+done
+
+echo "Creating WordPress database..."
+# echo "********MARIADB_USER: $MARIADB_USER"
+# echo "********MARIADB_PASSWORD: $MARIADB_PASSWORD"
+# echo "********MARIADB_DATABASE: $MARIADB_DATABASE"
+# echo "********MARIADB_ROOT_USER: $MARIADB_ROOT_USER"
+# echo "********MARIADB_ROOT_PASSWORD: $MARIADB_ROOT_PASSWORD"
+# echo "********MARIADB_PORT: $MARIADB_PORT"
+
+mariadb -u ${MARIADB_ROOT_USER} -p"${MARIADB_ROOT_PASSWORD}" <<EOF
+CREATE DATABASE IF NOT EXISTS ${MARIADB_DATABASE};
+
+CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_PASSWORD}';
+
+GRANT ALL PRIVILEGES ON ${MARIADB_DATABASE}.* TO '${MARIADB_USER}'@'%';
+
+ALTER USER '${MARIADB_ROOT_USER}'@'localhost'
+IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
+
+FLUSH PRIVILEGES;
+EOF
+
+echo "Stopping temporary MariaDB..."
+
+mariadb-admin -u ${MARIADB_ROOT_USER} -p"${MARIADB_ROOT_PASSWORD}" shutdown
+
+echo "Starting MariaDB..."
+
+exec mysqld --user=mysql
