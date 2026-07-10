@@ -1,0 +1,58 @@
+services:
+
+  mariadb:
+    build: ./requirements/mariadb/
+    image: mariadb:Iception
+    container_name: mariadb
+    env_file:
+      - .env
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception
+
+  wordpress:
+    build: ./requirements/wordpress/
+    image: wordpress:Iception
+    container_name: wordpress
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+
+  nginx:
+    build: ./requirements/nginx
+    image: nginx:Inception
+    container_name: nginx
+    env_file:
+      - .env
+    restart: on-failure
+    init: true
+    secrets:
+      - nginx.crt
+      - nginx.key
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html:ro
+    networks:
+      - inception
+
+volumes:
+  mariadb_data:
+  wordpress_data:
+
+networks:
+  inception:
+
+secrets:
+  nginx.crt:
+    file: ./secrets/nginx.crt
+  nginx.key:
+    file: ./secrets/nginx.key

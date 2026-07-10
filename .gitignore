@@ -1,0 +1,5 @@
+srcs/secrets/
+mkcert
+*.crt
+*.key
+*.swp
