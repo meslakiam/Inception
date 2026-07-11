@@ -10,6 +10,12 @@ echo "=== SSL Setup ==="
 mkdir -p "$SECRETS_DIR"
 mkdir -p "$DATA_DIR/mariadb" "$DATA_DIR/wordpress"
 
+[ -f "$SECRETS_DIR/wordpress_admin_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/wordpress_admin_password"
+[ -f "$SECRETS_DIR/wordpress_user_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/wordpress_user_password"
+[ -f "$SECRETS_DIR/mariadb_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/mariadb_password"
+[ -f "$SECRETS_DIR/mariadb_root_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/mariadb_root_password"
+
+
 # Don't regenerate if the certificate already exists
 if [ -f "$SECRETS_DIR/nginx.crt" ] && [ -f "$SECRETS_DIR/nginx.key" ]; then
     echo "[+] SSL certificate already exists."
@@ -56,3 +62,6 @@ echo
 echo "[+] SSL certificate generated successfully."
 echo "    Certificate: $SECRETS_DIR/nginx.crt"
 echo "    Private key: $SECRETS_DIR/nginx.key"
+
+
+

@@ -3,6 +3,7 @@
 
 COMPOSE := docker compose -f srcs/docker-compose.yml
 DATA_DIR := /home/$(USER)/data
+SECRETS_DIR := srcs/requirements/secrets
 
 all: up
 
@@ -52,4 +53,6 @@ fclean: clean
 	-docker network rm $$(docker network ls -q --filter type=custom)
 	-docker system prune -af --volumes
 	-docker run --rm -u 0 -v $(DATA_DIR):/data busybox sh -c 'rm -rf /data/mariadb /data/wordpress'
+	-rm -rf $(SECRETS_DIR)
+
 
