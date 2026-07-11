@@ -2,19 +2,20 @@
 .PHONY: all up build down down-volumes ps logs logs-% exec-% shell certs clean fclean start stop
 
 COMPOSE := docker compose -f srcs/docker-compose.yml
+DATA_DIR := /home/$(USER)/data
 
 all: up
 
-up:
+up: certs
 	$(COMPOSE) up -d --build
 
-build:
+build: certs
 	$(COMPOSE) build
 
 down:
 	$(COMPOSE) down
 
-stop:
+stop: 
 	$(COMPOSE) stop
 
 start:
@@ -42,7 +43,13 @@ certs:
 	bash srcs/requirements/tools/first_setup.sh
 
 clean:
-	$(COMPOSE) down -v --rmi all --remove-orphans
+	$(COMPOSE) down --remove-orphans
+	-docker rm -f $$(docker ps -aq)
+	-docker rmi -f $$(docker images -aq)
 
 fclean: clean
+	-docker volume rm $$(docker volume ls -q)
+	-docker network rm $$(docker network ls -q --filter type=custom)
+	-docker system prune -af --volumes
+	-docker run --rm -u 0 -v $(DATA_DIR):/data busybox sh -c 'rm -rf /data/mariadb /data/wordpress'
 
