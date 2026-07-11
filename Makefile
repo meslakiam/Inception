@@ -52,7 +52,7 @@ fclean: clean
 	-docker volume rm $$(docker volume ls -q)
 	-docker network rm $$(docker network ls -q --filter type=custom)
 	-docker system prune -af --volumes
-	-docker run --rm -u 0 -v $(DATA_DIR):/data busybox sh -c 'rm -rf /data/mariadb /data/wordpress'
+	-sudo rm -rf $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
 	-rm -rf $(SECRETS_DIR)
 
 

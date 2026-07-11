@@ -44,6 +44,7 @@ add_action('wp_footer', function () {
 });
 EOF
 
+# Configure WordPress on the first start.
 if [ ! -f wp-config.php ]; then
 
     echo "Downloading WordPress..."
@@ -87,9 +88,20 @@ if [ ! -f wp-config.php ]; then
         --user_pass=$USER_PASSWORD \
         --allow-root
 
+    # WordPress and wp-config.php now exist, so Redis can be installed safely.
+    wp plugin install redis-cache --activate --allow-root
+    wp config set WP_REDIS_HOST redis --allow-root
+    wp config set WP_REDIS_PORT "$REDIS_PORT" --raw --allow-root
+
 fi
 
+#enable Redis Object Cache plugin
+wp redis enable --allow-root
+
 chown -R www-data:www-data /var/www/html
+
+
+
 
 if command -v php-fpm >/dev/null 2>&1; then
     exec php-fpm -F

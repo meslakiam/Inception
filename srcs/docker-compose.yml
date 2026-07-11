@@ -6,6 +6,8 @@ services:
     container_name: mariadb
     env_file:
       - .env
+    restart: on-failure
+    init: true
     secrets:
       - mariadb_root_password
       - mariadb_password
@@ -20,6 +22,8 @@ services:
     container_name: wordpress
     env_file:
       - .env
+    restart: on-failure
+    init: true
     secrets:
       - mariadb_password
       - wordpress_admin_password
@@ -50,6 +54,15 @@ services:
       - wordpress_data:/var/www/html:ro
     networks:
       - inception
+
+  redis:
+      build: ./requirements/bonus/redis
+      image: redis:Inception
+      container_name: redis
+      restart: on-failure
+      init: true
+      networks:
+        - inception
 
 volumes:
   mariadb_data:
