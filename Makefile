@@ -1,5 +1,5 @@
 
-.PHONY: all up build down down-volumes ps logs logs-% exec-% shell certs clean
+.PHONY: all up build down down-volumes ps logs logs-% exec-% shell certs clean fclean start stop
 
 COMPOSE := docker compose -f srcs/docker-compose.yml
 
@@ -13,6 +13,12 @@ build:
 
 down:
 	$(COMPOSE) down
+
+stop:
+	$(COMPOSE) stop
+
+start:
+	$(COMPOSE) start
 
 down-volumes:
 	$(COMPOSE) down -v
@@ -37,4 +43,6 @@ certs:
 
 clean:
 	$(COMPOSE) down -v --rmi all --remove-orphans
+
+fclean: clean
 

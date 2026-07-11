@@ -6,6 +6,9 @@ services:
     container_name: mariadb
     env_file:
       - .env
+    secrets:
+      - mariadb_root_password
+      - mariadb_password
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
@@ -17,6 +20,10 @@ services:
     container_name: wordpress
     env_file:
       - .env
+    secrets:
+      - mariadb_password
+      - wordpress_admin_password
+      - wordpress_user_password
     depends_on:
       - mariadb
     volumes:
@@ -46,7 +53,17 @@ services:
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${USER}/data/mariadb
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${USER}/data/wordpress
 
 networks:
   inception:
@@ -56,3 +73,11 @@ secrets:
     file: ./secrets/nginx.crt
   nginx.key:
     file: ./secrets/nginx.key
+  mariadb_root_password:
+    file: ./secrets/mariadb_root_password
+  mariadb_password:
+    file: ./secrets/mariadb_password
+  wordpress_admin_password:
+    file: ./secrets/wordpress_admin_password
+  wordpress_user_password:
+    file: ./secrets/wordpress_user_password

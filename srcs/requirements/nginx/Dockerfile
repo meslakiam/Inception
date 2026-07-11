@@ -1,4 +1,4 @@
-FROM debian:13
+FROM debian:bookworm
 
 RUN apt-get update && \
     apt-get install -y nginx openssl && \
@@ -9,6 +9,6 @@ COPY conf/nginx.sh /setup.sh
 
 RUN chmod +x /setup.sh
 
-EXPOSE 443
+EXPOSE ${NGINX_PORT}
 
 ENTRYPOINT ["/setup.sh"]

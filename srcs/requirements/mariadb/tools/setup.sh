@@ -1,6 +1,12 @@
 #!/bin/sh
 set -e
 
+ROOT_PASSWORD="${MARIADB_ROOT_PASSWORD:-}"
+DB_PASSWORD="${MARIADB_PASSWORD:-}"
+
+[ -f /run/secrets/mariadb_root_password ] && ROOT_PASSWORD=$(cat /run/secrets/mariadb_root_password)
+[ -f /run/secrets/mariadb_password ] && DB_PASSWORD=$(cat /run/secrets/mariadb_password)
+
 echo "Configuring MariaDB..."
 
 cat > /etc/mysql/mariadb.conf.d/my.cnf <<EOF
@@ -27,22 +33,22 @@ echo "Creating WordPress database..."
 # echo "********MARIADB_ROOT_PASSWORD: $MARIADB_ROOT_PASSWORD"
 # echo "********MARIADB_PORT: $MARIADB_PORT"
 
-mariadb -u ${MARIADB_ROOT_USER} -p"${MARIADB_ROOT_PASSWORD}" <<EOF
+mariadb -u ${MARIADB_ROOT_USER} -p"${ROOT_PASSWORD}" <<EOF
 CREATE DATABASE IF NOT EXISTS ${WORDPRESS_DB_NAME};
 
-CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 
 GRANT ALL PRIVILEGES ON ${WORDPRESS_DB_NAME}.* TO '${MARIADB_USER}'@'%';
 
 ALTER USER '${MARIADB_ROOT_USER}'@'localhost'
-IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
+IDENTIFIED BY '${ROOT_PASSWORD}';
 
 FLUSH PRIVILEGES;
 EOF
 
 echo "Stopping temporary MariaDB..."
 
-mariadb-admin -u ${MARIADB_ROOT_USER} -p"${MARIADB_ROOT_PASSWORD}" shutdown
+mariadb-admin -u ${MARIADB_ROOT_USER} -p"${ROOT_PASSWORD}" shutdown
 
 echo "Starting MariaDB..."
 

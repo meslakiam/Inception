@@ -2,11 +2,13 @@
 set -e
 
 SECRETS_DIR="srcs/secrets"
+DATA_DIR="/home/${USER}/data"
 DOMAIN="${USER}.42.fr"
 
 echo "=== SSL Setup ==="
 
 mkdir -p "$SECRETS_DIR"
+mkdir -p "$DATA_DIR/mariadb" "$DATA_DIR/wordpress"
 
 # Don't regenerate if the certificate already exists
 if [ -f "$SECRETS_DIR/nginx.crt" ] && [ -f "$SECRETS_DIR/nginx.key" ]; then
