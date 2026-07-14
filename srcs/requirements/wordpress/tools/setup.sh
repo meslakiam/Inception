@@ -99,7 +99,7 @@ fi
 wp redis enable --allow-root
 
 chown -R www-data:www-data /var/www/html
-
+chmod -R g+rwX /var/www/html
 
 
 

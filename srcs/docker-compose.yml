@@ -55,6 +55,7 @@ services:
     networks:
       - inception
 
+
   redis:
       build: ./requirements/bonus/redis
       image: redis:Inception
@@ -63,6 +64,23 @@ services:
       init: true
       networks:
         - inception
+  ftp:
+    build: ./requirements/bonus/FTP_server
+    image: ftp:Inception
+    container_name: ftp
+    env_file:
+      - .env
+    ports:
+      - "${FTP_PORT}:${FTP_PORT}"
+      - "${PASV_PORT}:${PASV_PORT}"
+    restart: on-failure
+    init: true
+    secrets:
+      - ftp_password
+    volumes:
+      - wordpress_data:/var/www/html:rw
+    networks:
+      - inception
 
 volumes:
   mariadb_data:
@@ -94,3 +112,5 @@ secrets:
     file: ./secrets/wordpress_admin_password
   wordpress_user_password:
     file: ./secrets/wordpress_user_password
+  ftp_password:
+    file: ./secrets/ftp_password

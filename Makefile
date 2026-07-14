@@ -1,9 +1,6 @@
-
-.PHONY: all up build down down-volumes ps logs logs-% exec-% shell certs clean fclean start stop
-
 COMPOSE := docker compose -f srcs/docker-compose.yml
 DATA_DIR := /home/$(USER)/data
-SECRETS_DIR := srcs/requirements/secrets
+SECRETS_DIR := srcs/secrets
 
 all: up
 
@@ -31,15 +28,6 @@ ps:
 logs:
 	$(COMPOSE) logs -f
 
-logs-%:
-	$(COMPOSE) logs -f $*
-
-exec-%:
-	$(COMPOSE) exec $* sh
-
-shell:
-	$(COMPOSE) exec wordpress sh
-
 certs:
 	bash srcs/requirements/tools/first_setup.sh
 
@@ -56,3 +44,8 @@ fclean: clean
 	-rm -rf $(SECRETS_DIR)
 
 
+re: clean all
+
+fre: fclean all
+
+.PHONY: all up build down down-volumes ps logs clean fclean start stop
