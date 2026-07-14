@@ -1,0 +1,6 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+wwwroot/.DS_Store

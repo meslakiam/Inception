@@ -27,6 +27,14 @@ server {
         try_files \$uri \$uri/ /index.php?\$args;
     }
 
+    location /resume/ {
+        proxy_pass http://resume:5000/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
     location ~ \.php$ {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
@@ -34,10 +42,12 @@ server {
         fastcgi_index index.php;
     }
 
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-        try_files \$uri =404;
-        expires max;
-        access_log off;
+
+    location = /adminer {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/adminer/index.php;
+        fastcgi_param SCRIPT_NAME /adminer/index.php;
+        fastcgi_pass adminer:9000;
     }
 }
 EOF

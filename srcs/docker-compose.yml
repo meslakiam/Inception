@@ -52,8 +52,10 @@ services:
       - "443:443"
     volumes:
       - wordpress_data:/var/www/html:ro
+      - adminer_data:/var/www/adminer:ro
     networks:
       - inception
+
 
 
   redis:
@@ -64,6 +66,7 @@ services:
       init: true
       networks:
         - inception
+  
   ftp:
     build: ./requirements/bonus/FTP_server
     image: ftp:Inception
@@ -82,6 +85,31 @@ services:
     networks:
       - inception
 
+  adminer:
+    build: ./requirements/bonus/adminer
+    image: adminer:Iception
+    container_name: adminer
+    env_file:
+      - .env
+    restart: on-failure
+    init: true
+    depends_on:
+      - mariadb
+    volumes:
+      - adminer_data:/var/www/adminer
+    networks:
+      - inception
+
+  resume:
+    build: ./requirements/bonus/Portfolio
+    image: resume:Iception
+    container_name: resume
+    restart: on-failure
+    init: true
+    networks:
+      - inception
+
+
 volumes:
   mariadb_data:
     driver: local
@@ -95,6 +123,7 @@ volumes:
       type: none
       o: bind
       device: /home/${USER}/data/wordpress
+  adminer_data:
 
 networks:
   inception:
