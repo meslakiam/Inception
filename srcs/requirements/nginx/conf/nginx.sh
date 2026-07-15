@@ -27,14 +27,16 @@ server {
         try_files \$uri \$uri/ /index.php?\$args;
     }
 
-    location /resume/ {
-        proxy_pass http://resume:5000/;
+    # Portfolio configuration
+    location /portfolio/ {
+        proxy_pass http://portfolio:5000/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
+    # WordPress configuration
     location ~ \.php$ {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
@@ -42,13 +44,33 @@ server {
         fastcgi_index index.php;
     }
 
-
+    # Adminer configuration
     location = /adminer {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME /var/www/adminer/index.php;
         fastcgi_param SCRIPT_NAME /adminer/index.php;
         fastcgi_pass adminer:9000;
     }
+
+    # Netdata configuration
+    location = /netdata {
+        return 301 /netdata/;
+    }
+
+    location /netdata/ {
+        proxy_pass http://netdata:19999/;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+    
 }
 EOF
 

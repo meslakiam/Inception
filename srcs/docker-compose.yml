@@ -2,7 +2,7 @@ services:
 
   mariadb:
     build: ./requirements/mariadb/
-    image: mariadb:Iception
+    image: mariadb:Inception
     container_name: mariadb
     env_file:
       - .env
@@ -18,7 +18,7 @@ services:
 
   wordpress:
     build: ./requirements/wordpress/
-    image: wordpress:Iception
+    image: wordpress:Inception
     container_name: wordpress
     env_file:
       - .env
@@ -87,7 +87,7 @@ services:
 
   adminer:
     build: ./requirements/bonus/adminer
-    image: adminer:Iception
+    image: adminer:Inception
     container_name: adminer
     env_file:
       - .env
@@ -100,12 +100,25 @@ services:
     networks:
       - inception
 
-  resume:
-    build: ./requirements/bonus/Portfolio
-    image: resume:Iception
-    container_name: resume
+  portfolio:
+    build: ./requirements/bonus/portfolio
+    image: portfolio:Inception
+    container_name: portfolio
     restart: on-failure
     init: true
+    networks:
+      - inception
+  
+  netdata:
+    build: ./requirements/bonus/netdata
+    image: netdata:Inception
+    container_name: netdata
+    restart: on-failure
+    init: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
     networks:
       - inception
 
