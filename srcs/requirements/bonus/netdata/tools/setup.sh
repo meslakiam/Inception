@@ -1,15 +1,17 @@
 #!/bin/bash
-set -e
+set -eu
 
-git clone https://github.com/netdata/netdata.git /tmp/netdata
+socket=/var/run/docker.sock
+if [ -S "$socket" ]; then
+    socket_gid="$(stat -c '%g' "$socket")"
+    socket_group="$(getent group "$socket_gid" | cut -d: -f1 || true)"
 
-cd /tmp/netdata
+    if [ -z "$socket_group" ]; then
+        socket_group=dockerhost
+        groupadd -g "$socket_gid" "$socket_group"
+    fi
 
-./netdata-installer.sh \
-    --dont-wait \
-    --dont-start-it \
-    --stable-channel
-
-rm -rf /tmp/netdata
+    usermod -aG "$socket_group" netdata
+fi
 
 exec /usr/sbin/netdata -D
