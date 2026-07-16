@@ -9,12 +9,12 @@ services:
     restart: on-failure
     init: true
     secrets:
-      - mariadb_root_password
-      - mariadb_password
+      - db_root_password
+      - db_user_password
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
-      - inception
+      - inception_network
 
   wordpress:
     build: ./requirements/wordpress/
@@ -25,7 +25,7 @@ services:
     restart: on-failure
     init: true
     secrets:
-      - mariadb_password
+      - db_user_password
       - wordpress_admin_password
       - wordpress_user_password
     depends_on:
@@ -33,7 +33,7 @@ services:
     volumes:
       - wordpress_data:/var/www/html
     networks:
-      - inception
+      - inception_network
 
   nginx:
     build: ./requirements/nginx
@@ -54,8 +54,7 @@ services:
       - wordpress_data:/var/www/html:ro
       - adminer_data:/var/www/adminer:ro
     networks:
-      - inception
-
+      - inception_network
 
 
   redis:
@@ -65,7 +64,7 @@ services:
       restart: on-failure
       init: true
       networks:
-        - inception
+        - inception_network
   
   ftp:
     build: ./requirements/bonus/FTP_server
@@ -75,7 +74,7 @@ services:
       - .env
     ports:
       - "${FTP_PORT}:${FTP_PORT}"
-      - "${PASV_PORT}:${PASV_PORT}"
+      - "${PASV_MIN_PORT}-${PASV_MAX_PORT}:${PASV_MIN_PORT}-${PASV_MAX_PORT}"
     restart: on-failure
     init: true
     secrets:
@@ -83,7 +82,7 @@ services:
     volumes:
       - wordpress_data:/var/www/html:rw
     networks:
-      - inception
+      - inception_network
 
   adminer:
     build: ./requirements/bonus/adminer
@@ -98,7 +97,7 @@ services:
     volumes:
       - adminer_data:/var/www/adminer
     networks:
-      - inception
+      - inception_network
 
   portfolio:
     build: ./requirements/bonus/portfolio
@@ -107,7 +106,7 @@ services:
     restart: on-failure
     init: true
     networks:
-      - inception
+      - inception_network
   
   netdata:
     build: ./requirements/bonus/netdata
@@ -123,10 +122,8 @@ services:
     cap_add:
       - SYS_ADMIN
       - SYS_PTRACE
-    group_add:
-      - "${DOCKER_GID}"
     networks:
-      - inception
+      - inception_network
 
 
 volumes:
@@ -145,17 +142,17 @@ volumes:
   adminer_data:
 
 networks:
-  inception:
+  inception_network:
 
 secrets:
   nginx.crt:
     file: ./secrets/nginx.crt
   nginx.key:
     file: ./secrets/nginx.key
-  mariadb_root_password:
-    file: ./secrets/mariadb_root_password
-  mariadb_password:
-    file: ./secrets/mariadb_password
+  db_root_password:
+    file: ./secrets/db_root_password
+  db_user_password:
+    file: ./secrets/db_user_password
   wordpress_admin_password:
     file: ./secrets/wordpress_admin_password
   wordpress_user_password:

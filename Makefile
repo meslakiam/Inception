@@ -1,6 +1,4 @@
 COMPOSE := docker compose -f srcs/docker-compose.yml
-DOCKER_GID ?= $(shell stat -c '%g' /var/run/docker.sock)
-  export DOCKER_GID
 DATA_DIR := /home/$(USER)/data
 SECRETS_DIR := srcs/secrets
 

@@ -1,18 +1,18 @@
 #!/bin/sh
 set -e
 
-ROOT_PASSWORD="${MARIADB_ROOT_PASSWORD:-}"
-DB_PASSWORD="${MARIADB_PASSWORD:-}"
+ROOT_PASSWORD="${db_root_password:-}"
+DB_PASSWORD="${db_user_password:-}"
 
-[ -f /run/secrets/mariadb_root_password ] && ROOT_PASSWORD=$(cat /run/secrets/mariadb_root_password)
-[ -f /run/secrets/mariadb_password ] && DB_PASSWORD=$(cat /run/secrets/mariadb_password)
+[ -f /run/secrets/db_root_password ] && ROOT_PASSWORD=$(cat /run/secrets/db_root_password)
+[ -f /run/secrets/db_user_password ] && DB_PASSWORD=$(cat /run/secrets/db_user_password)
 
 echo "Configuring MariaDB..."
 
 cat > /etc/mysql/mariadb.conf.d/my.cnf <<EOF
 [mysqld]
 bind-address=0.0.0.0
-port=${MARIADB_PORT}
+port=${DB_PORT}
 datadir=/var/lib/mysql
 EOF
 
@@ -26,21 +26,21 @@ until mariadb-admin ping --silent; do
 done
 
 echo "Creating WordPress database..."
-# echo "********MARIADB_USER: $MARIADB_USER"
-# echo "********MARIADB_PASSWORD: $MARIADB_PASSWORD"
-# echo "********WORDPRESS_DB_NAME: $WORDPRESS_DB_NAME"
-# echo "********MARIADB_ROOT_USER: $MARIADB_ROOT_USER"
-# echo "********MARIADB_ROOT_PASSWORD: $MARIADB_ROOT_PASSWORD"
-# echo "********MARIADB_PORT: $MARIADB_PORT"
+# echo "********DB_USER: $DB_USER"
+# echo "********db_user_password: $db_user_password"
+# echo "********DB_NAME_IN_MARIADB: $DB_NAME_IN_MARIADB"
+# echo "********DB_ROOT_USER: $DB_ROOT_USER"
+# echo "********db_root_password: $db_root_password"
+# echo "********DB_PORT: $DB_PORT"
 
-mariadb -u ${MARIADB_ROOT_USER} -p"${ROOT_PASSWORD}" <<EOF
-CREATE DATABASE IF NOT EXISTS ${WORDPRESS_DB_NAME};
+mariadb -u ${DB_ROOT_USER} -p"${ROOT_PASSWORD}" <<EOF
+CREATE DATABASE IF NOT EXISTS ${DB_NAME_IN_MARIADB};
 
-CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 
-GRANT ALL PRIVILEGES ON ${WORDPRESS_DB_NAME}.* TO '${MARIADB_USER}'@'%';
+GRANT ALL PRIVILEGES ON ${DB_NAME_IN_MARIADB}.* TO '${DB_USER}'@'%';
 
-ALTER USER '${MARIADB_ROOT_USER}'@'localhost'
+ALTER USER '${DB_ROOT_USER}'@'localhost'
 IDENTIFIED BY '${ROOT_PASSWORD}';
 
 FLUSH PRIVILEGES;
@@ -48,7 +48,7 @@ EOF
 
 echo "Stopping temporary MariaDB..."
 
-mariadb-admin -u ${MARIADB_ROOT_USER} -p"${ROOT_PASSWORD}" shutdown
+mariadb-admin -u ${DB_ROOT_USER} -p"${ROOT_PASSWORD}" shutdown
 
 echo "Starting MariaDB..."
 

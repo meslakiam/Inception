@@ -12,8 +12,8 @@ mkdir -p "$DATA_DIR/mariadb" "$DATA_DIR/wordpress"
 
 [ -f "$SECRETS_DIR/wordpress_admin_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/wordpress_admin_password"
 [ -f "$SECRETS_DIR/wordpress_user_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/wordpress_user_password"
-[ -f "$SECRETS_DIR/mariadb_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/mariadb_password"
-[ -f "$SECRETS_DIR/mariadb_root_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/mariadb_root_password"
+[ -f "$SECRETS_DIR/db_user_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/db_user_password"
+[ -f "$SECRETS_DIR/db_root_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/db_root_password"
 [ -f "$SECRETS_DIR/ftp_password" ] || openssl rand -base64 32 > "$SECRETS_DIR/ftp_password"
 
 

@@ -5,11 +5,11 @@ mkdir -p /run/php
 
 cd /var/www/html
 
-DB_PASSWORD="${MARIADB_PASSWORD:-}"
+DB_PASSWORD="${db_user_password:-}"
 ADMIN_PASSWORD="${WORDPRESS_ADMIN_PASSWORD:-}"
 USER_PASSWORD="${WORDPRESS_USER_PASSWORD:-}"
 
-[ -f /run/secrets/mariadb_password ] && DB_PASSWORD=$(cat /run/secrets/mariadb_password)
+[ -f /run/secrets/db_user_password ] && DB_PASSWORD=$(cat /run/secrets/db_user_password)
 [ -f /run/secrets/wordpress_admin_password ] && ADMIN_PASSWORD=$(cat /run/secrets/wordpress_admin_password)
 [ -f /run/secrets/wordpress_user_password ] && USER_PASSWORD=$(cat /run/secrets/wordpress_user_password)
 
@@ -55,7 +55,7 @@ if [ ! -f wp-config.php ]; then
 
     until mariadb-admin \
         --host=$WORDPRESS_DB_HOST \
-        --user=$MARIADB_USER \
+        --user=$DB_USER \
         --password=$DB_PASSWORD \
         ping --silent
     do
@@ -66,8 +66,8 @@ if [ ! -f wp-config.php ]; then
 
     wp config create \
         --allow-root \
-        --dbname=$WORDPRESS_DB_NAME \
-        --dbuser=$MARIADB_USER \
+        --dbname=$DB_NAME_IN_MARIADB \
+        --dbuser=$DB_USER \
         --dbpass=$DB_PASSWORD \
         --dbhost=$WORDPRESS_DB_HOST
 

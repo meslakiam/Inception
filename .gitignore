@@ -3,3 +3,8 @@ mkcert
 *.crt
 *.key
 *.swp
+bin/
+obj/
+*.user
+*.suo
+.vs/

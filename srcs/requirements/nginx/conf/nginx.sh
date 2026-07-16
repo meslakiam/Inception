@@ -8,7 +8,7 @@ cat > /etc/nginx/conf.d/default.conf <<EOF
 server {
     listen ${NGINX_PORT} ssl;
     listen [::]:${NGINX_PORT} ssl;
-    server_name ${NGINX_HOSTNAME};
+    server_name ${DOMAIN_NAME};
 
     ssl_certificate     /run/secrets/nginx.crt;
     ssl_certificate_key /run/secrets/nginx.key;
