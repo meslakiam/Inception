@@ -1,91 +1,818 @@
-# User documentation
+# USER_DOC.md
 
-This project is a Docker-based web stack. Run the commands below from the repository root.
+> User documentation for the Inception project.
 
-## Services provided
+This document explains how to install, configure, run, and manage the Inception infrastructure.
 
-| Service | Purpose | How it is reached |
-| --- | --- | --- |
-| Nginx | Public HTTPS entry point and reverse proxy | Port `443` |
-| WordPress | Main website and content-management system | `/` |
-| MariaDB | Database used by WordPress | Internal only |
-| Redis | WordPress object cache | Internal only |
-| Adminer | Browser-based MariaDB administration tool | `/adminer` |
-| FTP server | File access to the WordPress files | FTP and passive ports configured in `srcs/.env` |
-| Portfolio | Additional web application | `/portfolio/` |
-| Netdata | Service and host monitoring dashboard | `/netdata/` |
+Unlike **DEV_DOC.md**, which focuses on implementation details and architecture, this guide is intended for users and administrators who simply want to deploy and use the project.
 
-## Start and stop the stack
+For implementation details and architectural decisions, refer to **DEV_DOC.md**.
 
-Start everything:
+---
+
+# 1. Introduction
+
+## Overview
+
+Inception is a complete containerized web infrastructure built with Docker Compose.
+
+Instead of installing every application directly on the operating system, each service runs inside its own Docker container.
+
+The infrastructure includes:
+
+- NGINX (Reverse Proxy)
+- WordPress
+- MariaDB
+- Redis
+- Adminer
+- FTP Server
+- Portfolio (.NET)
+- Netdata
+
+All services are automatically built and configured through Docker Compose.
+
+---
+
+## Features
+
+The project provides:
+
+- HTTPS using TLS
+- WordPress website
+- MariaDB database
+- Redis object caching
+- FTP access
+- Database administration through Adminer
+- Personal portfolio website
+- Infrastructure monitoring using Netdata
+- Persistent storage using Docker Volumes
+- Secure credential management using Docker Secrets
+
+---
+
+# 2. Prerequisites
+
+Before running the project, ensure the following software is installed.
+
+## Required
+
+- Linux (or Linux Virtual Machine)
+- Docker Engine
+- Docker Compose
+- GNU Make
+
+Verify the installation.
 
 ```bash
-make up
+docker --version
+
+docker compose version
+
+make --version
 ```
 
-On its first run, the project creates the data directories, generates password files when they are missing, and creates a local TLS certificate. `mkcert` is used when available; otherwise the setup script downloads it, so internet access is needed for that first certificate setup.
+---
 
-Other lifecycle commands:
+## Optional
 
-```bash
-make stop          # stop containers but keep them and their data
-make start         # restart previously stopped containers
-make down          # stop and remove containers; keep persistent data
-make down-volumes  # stop, remove containers and declared Docker volumes
-```
+The setup script can automatically generate TLS certificates.
 
-## Open the website and panels
+The following tools may also be useful.
 
-The hostname is the value of `DOMAIN_NAME` in `srcs/.env`; the setup script also creates a certificate for `${USER}.42.fr`, `localhost`, and `127.0.0.1`.
+- curl
+- openssl
 
-For a local installation without DNS, map the configured hostname to your machine in `/etc/hosts`, for example:
+---
+
+# 3. Repository Structure
+
+The repository is organized as follows.
 
 ```text
-127.0.0.1 your-login.42.fr
+.
+├── Makefile
+├── README.md
+├── USER_DOC.md
+├── DEV_DOC.md
+└── srcs
+    ├── docker-compose.yml
+    ├── .env
+    ├── secrets/
+    └── requirements/
 ```
 
-Use HTTPS in a browser:
+Most users only need to interact with:
+
+| File | Purpose |
+|------|---------|
+| Makefile | Build and manage the project |
+| docker-compose.yml | Infrastructure definition |
+| .env | Configuration |
+| secrets/ | Automatically generated credentials |
+
+---
+
+# 4. Initial Setup
+
+Clone the repository.
+
+```bash
+git clone <repository-url>
+
+cd Inception
+```
+
+---
+
+## Configure Local DNS
+
+The project uses a local domain.
+
+Add it to your hosts file.
+
+```bash
+echo "127.0.0.1 <your_login>.42.fr" | sudo tee -a /etc/hosts
+```
+
+Example:
+
+```bash
+echo "127.0.0.1 imeslaki.42.fr" | sudo tee -a /etc/hosts
+```
+
+---
+
+## Verify Configuration
+
+Open:
+
+```
+srcs/.env
+```
+
+Verify the values match your environment.
+
+Typical configuration includes:
+
+- domain name
+- ports
+- usernames
+- database name
+
+Passwords are **not** stored in this file.
+
+---
+
+# 5. Building the Infrastructure
+
+The recommended way to build the project is:
+
+```bash
+make
+```
+
+This command automatically performs the following operations.
+
+1. Generates Docker Secrets.
+2. Generates TLS certificates.
+3. Creates required host directories.
+4. Builds every Docker image.
+5. Creates Docker volumes.
+6. Creates the Docker network.
+7. Starts all containers.
+
+The first build may take several minutes depending on your Internet connection.
+
+---
+
+## Verify Containers
+
+After the build finishes, check that every service is running.
+
+```bash
+docker compose -f srcs/docker-compose.yml ps
+```
+
+Example output:
 
 ```text
-https://<DOMAIN_NAME>/              Main WordPress website
-https://<DOMAIN_NAME>/wp-admin/     WordPress administration panel
-https://<DOMAIN_NAME>/adminer       Adminer database panel
-https://<DOMAIN_NAME>/portfolio/    Portfolio application
-https://<DOMAIN_NAME>/netdata/      Netdata monitoring dashboard
+NAME          STATUS
+nginx         Up
+wordpress     Up
+mariadb       Up
+redis         Up
+ftp           Up
+adminer       Up
+portfolio     Up
+netdata       Up
 ```
 
-The local certificate may need to be trusted by the browser or operating system before it is shown as trusted.
+If every service is marked as **Up**, the infrastructure is ready to use.
 
-## Credentials and accounts
 
-Do not put passwords in `srcs/.env`. Usernames and non-secret settings are kept there; passwords are separate files in `srcs/secrets/`:
+---
 
-| Account or service | Username source | Password file |
-| --- | --- | --- |
-| WordPress administrator | `WORDPRESS_ADMIN_USER` | `wordpress_admin_password` |
-| WordPress author | `WORDPRESS_USER` | `wordpress_user_password` |
-| MariaDB application user | `DB_USER` | `db_user_password` |
-| MariaDB root user | `DB_ROOT_USER` | `db_root_password` |
-| FTP user | `FTP_USER` | `ftp_password` |
+# 6. Accessing the Services
 
-TLS certificate files are `srcs/secrets/nginx.crt` and `srcs/secrets/nginx.key`.
+Once all containers are running, every service can be accessed through its designated endpoint.
 
-To sign in to Adminer, choose **MariaDB**, use `mariadb` as the server, then enter `DB_USER`, the contents of `db_user_password`, and `DB_NAME_IN_MARIADB` from `srcs/.env`.
+## WordPress
 
-To change a password, update its file without adding a trailing value on a second line, then recreate the affected account using its service's own administration interface or database commands. Merely restarting the stack does not change already-created WordPress, MariaDB, or FTP accounts. Keep `srcs/secrets/` private and out of source control.
+Open your browser and navigate to:
 
-## Check that the stack is healthy
+```
+https://<your_login>.42.fr
+```
 
-Check the container state:
+Example:
+
+```
+https://imeslaki.42.fr
+```
+
+From here you can:
+
+- Browse the website
+- Log in to the administration dashboard
+- Create posts and pages
+- Install themes and plugins
+- Manage media files
+
+The administrator credentials are generated during the initial setup and stored as Docker Secrets.
+
+---
+
+## Portfolio
+
+The portfolio website is available through NGINX.
+
+```
+https://<your_login>.42.fr/portfolio/
+```
+
+The portfolio is an independent ASP.NET application that showcases personal information and projects.
+
+---
+
+## Adminer
+
+Adminer provides a web interface for managing the MariaDB database.
+
+Open:
+
+```
+https://<your_login>.42.fr/adminer/
+```
+
+Use the following information to connect.
+
+| Setting | Value |
+|----------|-------|
+| System | MariaDB |
+| Server | mariadb |
+| Username | WordPress database user |
+| Password | Stored in Docker Secrets |
+| Database | WordPress database |
+
+Once connected you can:
+
+- Browse tables
+- Execute SQL queries
+- Export the database
+- Import SQL dumps
+
+---
+
+## Netdata
+
+Infrastructure monitoring is available at:
+
+```
+https://<your_login>.42.fr/netdata/
+```
+
+The dashboard provides real-time information including:
+
+- CPU usage
+- Memory usage
+- Disk activity
+- Network traffic
+- Docker container statistics
+
+---
+
+## FTP Server
+
+FTP allows direct access to the WordPress files.
+
+Typical connection settings:
+
+| Setting | Value |
+|----------|-------|
+| Host | `<your_login>.42.fr` |
+| Port | 21 (or configured FTP port) |
+| Username | FTP user |
+| Password | Stored in Docker Secrets |
+
+After connecting, uploaded files become immediately available to both WordPress and NGINX because they share the same persistent volume.
+
+---
+
+# 7. Managing the Infrastructure
+
+The project is managed through the provided Makefile.
+
+## Start
+
+If the containers already exist but are stopped:
 
 ```bash
-make ps
+make start
 ```
 
-All listed services should be running. Follow their logs if one is restarting or unavailable:
+---
+
+## Stop
+
+To stop all containers without removing them:
 
 ```bash
-make logs
+make stop
 ```
 
-A successful site response and reachable `/wp-admin/`, `/adminer`, `/portfolio/`, and `/netdata/` routes confirm the corresponding web-facing services. For a single service's logs, use `docker compose -f srcs/docker-compose.yml logs -f <service>`.
+Persistent data remains intact.
+
+---
+
+## Restart
+
+Restart the infrastructure by stopping and starting the containers.
+
+```bash
+make stop
+
+make start
+```
+
+---
+
+## Rebuild
+
+To rebuild every Docker image:
+
+```bash
+make re
+```
+
+This command rebuilds the infrastructure while preserving persistent data.
+
+---
+
+## Remove Containers and Images
+
+```bash
+make clean
+```
+
+This removes:
+
+- Containers
+- Images
+- Networks
+
+Persistent volumes are preserved.
+
+---
+
+## Complete Reset
+
+```bash
+make fclean
+```
+
+This removes:
+
+- Containers
+- Images
+- Networks
+- Docker Volumes
+- Generated Secrets
+
+Running `make` after `make fclean` performs a completely fresh installation.
+
+---
+
+# 8. Docker Compose Commands
+
+Advanced users may prefer interacting directly with Docker Compose.
+
+## View Running Containers
+
+```bash
+docker compose -f srcs/docker-compose.yml ps
+```
+
+---
+
+## Follow Logs
+
+```bash
+docker compose -f srcs/docker-compose.yml logs -f
+```
+
+Specific service:
+
+```bash
+docker compose -f srcs/docker-compose.yml logs -f wordpress
+```
+
+---
+
+## Restart a Service
+
+```bash
+docker compose -f srcs/docker-compose.yml restart nginx
+```
+
+---
+
+## Stop a Service
+
+```bash
+docker compose -f srcs/docker-compose.yml stop redis
+```
+
+---
+
+## Build a Single Service
+
+```bash
+docker compose -f srcs/docker-compose.yml build wordpress
+```
+
+---
+
+## Open a Shell
+
+Example:
+
+```bash
+docker exec -it wordpress sh
+
+docker exec -it mariadb sh
+
+docker exec -it nginx sh
+```
+
+This is useful for debugging or inspecting container contents.
+
+---
+
+# 9. Persistent Data
+
+The infrastructure stores application data in Docker named volumes.
+
+| Volume | Stores |
+|----------|--------|
+| `wordpress_data` | WordPress files, uploads, themes, plugins |
+| `mariadb_data` | MariaDB database |
+
+These volumes survive:
+
+- Container removal
+- Image rebuilds
+- Infrastructure updates
+
+They are removed only after executing:
+
+```bash
+make fclean
+```
+
+---
+---
+
+# 10. Using the Services
+
+This section describes the basic usage of each service after the infrastructure has been deployed.
+
+---
+
+## WordPress
+
+WordPress is the main application of the infrastructure.
+
+### Logging In
+
+Open:
+
+```
+https://<your_login>.42.fr/wp-admin
+```
+
+Authenticate using the administrator credentials generated during the initial setup.
+
+After logging in you can:
+
+- Create and edit pages
+- Publish blog posts
+- Upload media
+- Install plugins
+- Install themes
+- Manage users
+- Configure WordPress settings
+
+---
+
+### Media Uploads
+
+Media files uploaded through the WordPress dashboard are stored inside the shared `wordpress_data` volume.
+
+Because NGINX, WordPress, and FTP all mount the same volume, uploaded files are immediately available across all services.
+
+---
+
+### Redis Cache
+
+Redis is configured automatically during the installation.
+
+To verify that the cache is active:
+
+1. Log in to the WordPress dashboard.
+2. Navigate to the Redis plugin page.
+3. Confirm that the cache status is **Connected**.
+
+No manual Redis configuration is required.
+
+---
+
+## Adminer
+
+Adminer is a lightweight database management interface.
+
+It can be used to:
+
+- Browse tables
+- Execute SQL queries
+- Import SQL dumps
+- Export databases
+- Inspect table structures
+
+Typical login parameters:
+
+| Field | Value |
+|--------|-------|
+| System | MariaDB |
+| Server | mariadb |
+| Username | WordPress database user |
+| Password | Generated during setup |
+| Database | WordPress database |
+
+Adminer should only be used for database administration and debugging.
+
+---
+
+## FTP
+
+The FTP service provides direct access to the WordPress files.
+
+Typical operations include:
+
+- Upload themes
+- Upload plugins
+- Download backups
+- Modify website files
+- Remove unused content
+
+Any modification performed through FTP becomes immediately visible because the FTP container shares the same persistent volume with WordPress and NGINX.
+
+---
+
+## Portfolio
+
+The Portfolio service hosts an independent ASP.NET application.
+
+It is available at:
+
+```
+https://<your_login>.42.fr/portfolio/
+```
+
+Since it is independent from WordPress, updating the portfolio does not affect the main website.
+
+---
+
+## Netdata
+
+Netdata provides real-time monitoring of the infrastructure.
+
+Available information includes:
+
+- CPU usage
+- Memory usage
+- Network activity
+- Disk I/O
+- Running processes
+- Docker container statistics
+
+Netdata is useful for observing resource usage while testing the infrastructure.
+
+---
+
+# 11. Common Maintenance Tasks
+
+## View Running Containers
+
+```bash
+docker compose -f srcs/docker-compose.yml ps
+```
+
+---
+
+## View Logs
+
+All services:
+
+```bash
+docker compose -f srcs/docker-compose.yml logs
+```
+
+Specific service:
+
+```bash
+docker compose -f srcs/docker-compose.yml logs -f wordpress
+```
+
+---
+
+## Restart a Service
+
+Example:
+
+```bash
+docker compose -f srcs/docker-compose.yml restart nginx
+```
+
+---
+
+## Rebuild a Service
+
+```bash
+docker compose -f srcs/docker-compose.yml build wordpress
+
+docker compose -f srcs/docker-compose.yml up -d wordpress
+```
+
+---
+
+## Access a Container
+
+```bash
+docker exec -it wordpress sh
+
+docker exec -it mariadb sh
+
+docker exec -it nginx sh
+```
+
+---
+
+## Inspect Volumes
+
+```bash
+docker volume ls
+
+docker volume inspect wordpress_data
+
+docker volume inspect mariadb_data
+```
+
+---
+
+## Inspect Network
+
+```bash
+docker network ls
+
+docker network inspect inception_network
+```
+
+---
+
+# 12. Troubleshooting
+
+The following table lists common problems and their solutions.
+
+| Problem | Possible Cause | Solution |
+|----------|----------------|----------|
+| Website unavailable | NGINX not running | Check `docker compose ps` and restart NGINX |
+| 502 Bad Gateway | PHP-FPM unavailable | Verify the WordPress container is running |
+| Database connection error | MariaDB unavailable | Check MariaDB logs and restart the service |
+| Redis cache disabled | Plugin not enabled | Verify Redis plugin status in WordPress |
+| FTP connection refused | FTP container stopped | Restart the FTP service |
+| Adminer cannot connect | Incorrect database credentials | Verify the database username and password |
+| HTTPS certificate warning | Self-signed certificate | Accept the certificate or regenerate it |
+| Uploaded files disappear | Persistent volume removed | Restore the Docker volume or recreate the infrastructure |
+
+---
+
+## Viewing Logs
+
+The first step when troubleshooting should always be checking the logs.
+
+Example:
+
+```bash
+docker compose -f srcs/docker-compose.yml logs -f nginx
+
+docker compose -f srcs/docker-compose.yml logs -f wordpress
+
+docker compose -f srcs/docker-compose.yml logs -f mariadb
+```
+
+Most startup and configuration issues can be identified from the container logs.
+
+---
+
+## Resetting the Infrastructure
+
+If the infrastructure becomes inconsistent, perform a complete reset.
+
+```bash
+make fclean
+
+make
+```
+
+This removes all generated data and performs a fresh installation.
+
+> **Warning:** This operation permanently deletes the database, uploaded files, Docker volumes, and generated secrets.
+
+---
+
+# 13. Frequently Asked Questions
+
+### Why are there multiple containers?
+
+Each container has a single responsibility. This separation improves modularity, simplifies maintenance, and follows Docker best practices.
+
+---
+
+### Why is only NGINX exposed to the Internet?
+
+NGINX acts as the reverse proxy and central entry point for web traffic. Keeping backend services private reduces the attack surface and improves security.
+
+---
+
+### What happens if a container is removed?
+
+Containers are **temporary**. Removing a container does not affect persistent data stored in Docker volumes.
+
+---
+
+### Where is the website stored?
+
+The website files are stored in the `wordpress_data` Docker volume.
+
+---
+
+### Where is the database stored?
+
+The MariaDB database is stored in the `mariadb_data` Docker volume.
+
+---
+
+### What does `make fclean` remove?
+
+It removes:
+
+- All containers
+- All images
+- Docker volumes
+- Docker network
+- Generated secrets
+
+The next execution of `make` recreates the infrastructure from scratch.
+
+---
+
+# 14. Additional Resources
+
+For a high-level overview of the project, installation instructions, and design decisions, refer to:
+
+- **README.md**
+
+For implementation details, architecture diagrams, and developer-oriented documentation, refer to:
+
+- **DEV_DOC.md**
+
+Official documentation:
+
+- Docker Engine Documentation
+- Docker Compose Documentation
+- NGINX Documentation
+- WordPress Documentation
+- MariaDB Documentation
+- Redis Documentation
+- ASP.NET Documentation
+- Netdata Documentation
